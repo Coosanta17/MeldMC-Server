@@ -21,30 +21,40 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ClientModScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientModScanner.class);
     private static final String MODRINTH_API_URL = "https://api.modrinth.com/v2/version_files";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+    private static final String CACHE_FILE_NAME = "client-mods.json";
 
+    private boolean cacheModified = false;
     private final Map<String, ClientMod> modsMap = new HashMap<>();
 
     public void scanClientMods(Path clientModsDir) {
         checkDirectory(clientModsDir);
 
-        List<String> hashes = scanModFilesAndAddToModsMap(clientModsDir);
+        Path cacheFile = clientModsDir.resolve(CACHE_FILE_NAME);
+        loadModsCache(cacheFile);
 
-        if (!hashes.isEmpty()) {
-            Map<String, Map<String, Object>> response = sendHashesToModrinth(hashes);
+        Map<String, ClientMod> currentMods = scanCurrentModFiles(clientModsDir);
+        List<String> newOrChangedHashes = detectChanges(currentMods);
+
+        removeDeletedMods(currentMods);
+
+        if (!newOrChangedHashes.isEmpty()) {
+            LOGGER.info("Querying Modrinth API for {} new or changed mod files", newOrChangedHashes.size());
+            Map<String, Map<String, Object>> response = sendHashesToModrinth(newOrChangedHashes);
             if (response != null) {
                 editClientModsFromResponse(response);
             }
         } else {
-            LOGGER.info("No mod files found in client-mods directory");
+            LOGGER.info("No new or changed mod files found");
+        }
+
+        if (cacheModified) {
+            saveModsCache(cacheFile);
         }
     }
 
@@ -61,8 +71,41 @@ public class ClientModScanner {
         }
     }
 
-    private List<String> scanModFilesAndAddToModsMap(Path directory) {
-        List<String> hashes = new ArrayList<>();
+    private void loadModsCache(Path cacheFile) {
+        if (!Files.exists(cacheFile)) {
+            LOGGER.debug("No existing cache file found at: {}", cacheFile);
+            return;
+        }
+
+        try {
+            String jsonContent = Files.readString(cacheFile, StandardCharsets.UTF_8);
+            Type mapType = new TypeToken<Map<String, ClientMod>>() {
+            }.getType();
+            Map<String, ClientMod> cachedMods = GSON.fromJson(jsonContent, mapType);
+
+            if (cachedMods != null) {
+                modsMap.putAll(cachedMods);
+                LOGGER.info("Loaded {} cached mod entries", cachedMods.size());
+            }
+        } catch (IOException e) {
+            LOGGER.error("Failed to load mods cache", e);
+        } catch (Exception e) {
+            LOGGER.error("Failed to parse mods cache JSON", e);
+        }
+    }
+
+    private void saveModsCache(Path cacheFile) {
+        try {
+            String jsonContent = GSON.toJson(modsMap);
+            Files.writeString(cacheFile, jsonContent, StandardCharsets.UTF_8);
+            LOGGER.info("Saved {} mod entries to cache", modsMap.size());
+        } catch (IOException e) {
+            LOGGER.error("Failed to save mods cache", e);
+        }
+    }
+
+    private Map<String, ClientMod> scanCurrentModFiles(Path directory) {
+        Map<String, ClientMod> currentMods = new HashMap<>();
 
         try (var pathStream = Files.list(directory)) {
             pathStream
@@ -70,20 +113,64 @@ public class ClientModScanner {
                     .forEach(path -> {
                         try {
                             String hash = calculateSHA512(path.toFile());
-                            hashes.add(hash);
-                            modsMap.put(hash, new ClientMod(hash));
-                            LOGGER.debug("Added hash for file {}: {}", path.getFileName(), hash);
+                            String fileName = path.getFileName().toString();
+
+                            ClientMod mod = new ClientMod(hash, fileName);
+                            currentMods.put(hash, mod);
+                            LOGGER.debug("Found mod file {}: {}", fileName, hash);
                         } catch (Exception e) {
                             LOGGER.error("Error processing file: {}", path.getFileName(), e);
                         }
                     });
 
-            LOGGER.info("Scanned {} mod files", hashes.size());
+            LOGGER.info("Found {} mod files in directory", currentMods.size());
         } catch (IOException e) {
             LOGGER.error("Error scanning client-mods directory", e);
         }
 
-        return hashes;
+        return currentMods;
+    }
+
+    private List<String> detectChanges(Map<String, ClientMod> currentMods) {
+        List<String> newOrChangedHashes = new ArrayList<>();
+
+        for (Map.Entry<String, ClientMod> entry : currentMods.entrySet()) {
+            String hash = entry.getKey();
+            ClientMod currentMod = entry.getValue();
+            ClientMod cachedMod = modsMap.get(hash);
+
+            if (cachedMod == null) { // New file
+                newOrChangedHashes.add(hash);
+                modsMap.put(hash, currentMod);
+                cacheModified = true;
+                LOGGER.debug("New mod file detected: {}", currentMod.getFileName());
+            } else if (!cachedMod.getFileName().equals(currentMod.getFileName())) { // Changed file metadata
+                cachedMod.setFileName(currentMod.getFileName());
+                cacheModified = true;
+                LOGGER.debug("Modified mod file metadata detected: {}", currentMod.getFileName());
+            }
+        }
+
+        return newOrChangedHashes;
+    }
+
+    private void removeDeletedMods(Map<String, ClientMod> currentMods) {
+        List<String> toRemove = new ArrayList<>();
+
+        for (String hash : modsMap.keySet()) {
+            if (!currentMods.containsKey(hash)) {
+                toRemove.add(hash);
+            }
+        }
+
+        if (!toRemove.isEmpty()) {
+            for (String hash : toRemove) {
+                ClientMod removedMod = modsMap.remove(hash);
+                LOGGER.debug("Removed deleted mod file: {}", removedMod.getFileName());
+            }
+            cacheModified = true;
+            LOGGER.info("Removed {} deleted mod entries from cache", toRemove.size());
+        }
     }
 
     private String calculateSHA512(File file) throws IOException, NoSuchAlgorithmException {
@@ -150,6 +237,7 @@ public class ClientModScanner {
 
             if (!modsMap.containsKey(hash)) {
                 LOGGER.error("Unknown hash returned from API: {}", hash);
+                continue;
             }
 
             Map<String, Object> modData = entry.getValue();
