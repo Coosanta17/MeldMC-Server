@@ -1,5 +1,7 @@
 package net.coosanta.meldmc.mod;
 
+import net.minecraft.network.protocol.status.ClientboundStatusResponsePacket;
+import net.minecraft.network.protocol.status.ServerStatus;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -28,8 +30,6 @@ public class MeldMC {
 
         // Initialize the client mod scanner
         clientModScanner = new ClientModScanner();
-
-        LOGGER.info("Initialised MeldMC");
     }
 
     @SubscribeEvent
