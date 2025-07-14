@@ -1,7 +1,6 @@
 package net.coosanta.meldmc.mod;
 
-import net.minecraft.network.protocol.status.ClientboundStatusResponsePacket;
-import net.minecraft.network.protocol.status.ServerStatus;
+import net.coosanta.meldmc.mod.modlist.ClientModScanner;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;

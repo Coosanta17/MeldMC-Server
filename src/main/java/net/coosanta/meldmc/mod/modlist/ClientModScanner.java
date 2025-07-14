@@ -1,4 +1,4 @@
-package net.coosanta.meldmc.mod;
+package net.coosanta.meldmc.mod.modlist;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

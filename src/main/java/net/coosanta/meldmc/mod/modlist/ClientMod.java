@@ -1,4 +1,4 @@
-package net.coosanta.meldmc.mod;
+package net.coosanta.meldmc.mod.modlist;
 
 public class ClientMod {
     private final String hash;
