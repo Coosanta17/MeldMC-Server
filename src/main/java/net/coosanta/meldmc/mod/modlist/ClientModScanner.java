@@ -32,7 +32,7 @@ public class ClientModScanner {
     private boolean cacheModified = false;
     private final Map<String, ClientMod> modsMap = new HashMap<>();
 
-    public void scanClientMods(Path clientModsDir) {
+    public Map<String, ClientMod> scanClientMods(Path clientModsDir) {
         checkDirectory(clientModsDir);
 
         Path cacheFile = clientModsDir.resolve(CACHE_FILE_NAME);
@@ -56,6 +56,8 @@ public class ClientModScanner {
         if (cacheModified) {
             saveModsCache(cacheFile);
         }
+
+        return modsMap;
     }
 
     private void checkDirectory(Path directory) {
