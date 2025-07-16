@@ -1,22 +1,13 @@
 package net.coosanta.meldmc.mod;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import net.coosanta.meldmc.mod.modlist.ClientMod;
 import net.coosanta.meldmc.mod.modlist.ClientModScanner;
-import net.coosanta.meldmc.mod.network.MeldPacketHandler;
-import net.coosanta.meldmc.mod.network.packets.ServerboundModlistRequestPacket;
-import net.minecraft.client.multiplayer.ServerStatusPinger;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.network.NetworkEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,19 +41,6 @@ public class MeldMC {
         LOGGER.info("Client mod scanning complete");
 
         LOGGER.info("MeldMC Started!");
-    }
-
-    @SubscribeEvent
-    public static void commonSetup(FMLCommonSetupEvent event) {
-        LOGGER.debug("Meld Common Setup called");
-        event.enqueueWork(MeldPacketHandler::register);
-    }
-
-    @SubscribeEvent
-    public void onCustomPayload(NetworkEvent.ServerCustomPayloadEvent event) {
-        if (event.getPayload().readResourceLocation().equals(ResourceLocation.fromNamespaceAndPath("meldmc", "main"))) {
-            MeldPacketHandler.handleCustomPayload(event.getPayload());
-        }
     }
 
     public static Map<String, ClientMod> getModlistMap() {
