@@ -11,7 +11,11 @@ public record ClientboundModlistResponsePacket(HashMap<String, ClientMod> modlis
             Codec.STRING, ClientMod.CODEC).xmap(HashMap::new, map -> map);
 
     public void encode(FriendlyByteBuf buf) {
-        buf.writeJsonWithCodec(CODEC, modlistData);
+        buf.writeMap(
+                modlistData,
+                FriendlyByteBuf::writeUtf,
+                (buffer, value) -> buffer.writeJsonWithCodec(ClientMod.CODEC, value)
+        );
     }
 
     public static ClientboundModlistResponsePacket decode(FriendlyByteBuf buf) {
