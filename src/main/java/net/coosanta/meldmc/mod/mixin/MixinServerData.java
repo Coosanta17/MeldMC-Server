@@ -3,6 +3,7 @@ package net.coosanta.meldmc.mod.mixin;
 import com.google.gson.JsonObject;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import net.coosanta.meldmc.mod.Config;
 import net.minecraft.network.protocol.status.ServerStatus;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -33,6 +34,8 @@ public class MixinServerData {
                     Object jsonElement = result.result().get();
                     if (jsonElement instanceof JsonObject jsonObject) {
                         jsonObject.addProperty("meldSupport", true);
+                        jsonObject.addProperty("meldAddress", Config.serverConfig.address());
+                        jsonObject.addProperty("meldPort", Config.serverConfig.port());
                     }
                 }
 

@@ -29,10 +29,10 @@ public class ClientModScanner {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String CACHE_FILE_NAME = "client-mods.json";
 
-    private boolean cacheModified = false;
-    private final Map<String, ClientMod> modsMap = new HashMap<>();
+    private static boolean cacheModified = false;
+    private static final Map<String, ClientMod> modsMap = new HashMap<>();
 
-    public Map<String, ClientMod> scanClientMods(Path clientModsDir) {
+    public static Map<String, ClientMod> scanClientMods(Path clientModsDir) {
         checkDirectory(clientModsDir);
 
         Path cacheFile = clientModsDir.resolve(CACHE_FILE_NAME);
@@ -60,7 +60,7 @@ public class ClientModScanner {
         return modsMap;
     }
 
-    private void checkDirectory(Path directory) {
+    private static void checkDirectory(Path directory) {
         if (!Files.exists(directory)) {
             try {
                 Files.createDirectories(directory);
@@ -73,7 +73,7 @@ public class ClientModScanner {
         }
     }
 
-    private void loadModsCache(Path cacheFile) {
+    private static void loadModsCache(Path cacheFile) {
         if (!Files.exists(cacheFile)) {
             LOGGER.debug("No existing cache file found at: {}", cacheFile);
             return;
@@ -83,6 +83,7 @@ public class ClientModScanner {
             String jsonContent = Files.readString(cacheFile, StandardCharsets.UTF_8);
             Type mapType = new TypeToken<Map<String, ClientMod>>() {
             }.getType();
+
             Map<String, ClientMod> cachedMods = GSON.fromJson(jsonContent, mapType);
 
             if (cachedMods != null) {
@@ -96,7 +97,7 @@ public class ClientModScanner {
         }
     }
 
-    private void saveModsCache(Path cacheFile) {
+    private static void saveModsCache(Path cacheFile) {
         try {
             String jsonContent = GSON.toJson(modsMap);
             Files.writeString(cacheFile, jsonContent, StandardCharsets.UTF_8);
@@ -106,7 +107,7 @@ public class ClientModScanner {
         }
     }
 
-    private Map<String, ClientMod> scanCurrentModFiles(Path directory) {
+    private static Map<String, ClientMod> scanCurrentModFiles(Path directory) {
         Map<String, ClientMod> currentMods = new HashMap<>();
 
         try (var pathStream = Files.list(directory)) {
@@ -133,7 +134,7 @@ public class ClientModScanner {
         return currentMods;
     }
 
-    private List<String> detectChanges(Map<String, ClientMod> currentMods) {
+    private static List<String> detectChanges(Map<String, ClientMod> currentMods) {
         List<String> newOrChangedHashes = new ArrayList<>();
 
         for (Map.Entry<String, ClientMod> entry : currentMods.entrySet()) {
@@ -156,7 +157,7 @@ public class ClientModScanner {
         return newOrChangedHashes;
     }
 
-    private void removeDeletedMods(Map<String, ClientMod> currentMods) {
+    private static void removeDeletedMods(Map<String, ClientMod> currentMods) {
         List<String> toRemove = new ArrayList<>();
 
         for (String hash : modsMap.keySet()) {
@@ -175,7 +176,7 @@ public class ClientModScanner {
         }
     }
 
-    private String calculateSHA512(File file) throws IOException, NoSuchAlgorithmException {
+    private static String calculateSHA512(File file) throws IOException, NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-512");
         byte[] fileBytes = Files.readAllBytes(file.toPath());
         byte[] hashBytes = digest.digest(fileBytes);
@@ -187,7 +188,7 @@ public class ClientModScanner {
         return sb.toString();
     }
 
-    private Map<String, Map<String, Object>> sendHashesToModrinth(List<String> hashes) {
+    private static Map<String, Map<String, Object>> sendHashesToModrinth(List<String> hashes) {
         try {
             JsonObject requestBody = new JsonObject();
             requestBody.addProperty("algorithm", "sha512");
@@ -233,7 +234,7 @@ public class ClientModScanner {
         return null;
     }
 
-    public void editClientModsFromResponse(Map<String, Map<String, Object>> modInfo) {
+    public static void editClientModsFromResponse(Map<String, Map<String, Object>> modInfo) {
         for (Map.Entry<String, Map<String, Object>> entry : modInfo.entrySet()) {
             String hash = entry.getKey();
 
@@ -275,7 +276,7 @@ public class ClientModScanner {
         }
     }
 
-    private HttpURLConnection setUpHttpConnection(String jsonPayload) throws IOException {
+    private static HttpURLConnection setUpHttpConnection(String jsonPayload) throws IOException {
         URL url = new URL(MODRINTH_API_URL);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("POST");
