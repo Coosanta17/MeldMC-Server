@@ -5,18 +5,18 @@ import org.jetbrains.annotations.NotNull;
 public class ClientMod {
     private final String hash;
     private String url;
-    private @NotNull String fileName;
+    private @NotNull String filename;
 
-    public ClientMod(String hash, @NotNull String fileName) {
+    public ClientMod(String hash, @NotNull String filename) {
         this.hash = hash;
         this.url = null;
-        this.fileName = fileName;
+        this.filename = filename;
     }
 
-    public ClientMod(String hash, String url, @NotNull String fileName) {
+    public ClientMod(String hash, String url, @NotNull String filename) {
         this.hash = hash;
         this.url = url;
-        this.fileName = fileName;
+        this.filename = filename;
     }
 
     public String getHash() {
@@ -31,11 +31,11 @@ public class ClientMod {
         this.url = url;
     }
 
-    public @NotNull String getFileName() {
-        return fileName;
+    public @NotNull String getFilename() {
+        return filename;
     }
 
-    public void setFileName(@NotNull String fileName) {
-        this.fileName = fileName;
+    public void setFilename(@NotNull String filename) {
+        this.filename = filename;
     }
 }

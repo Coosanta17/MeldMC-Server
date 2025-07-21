@@ -7,9 +7,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-public record ServerConfig(String address, int port, Path filesDirectory, boolean useHttps, boolean autoSsl,
-                           String keyStorePath, String keyStorePassword, String keyStoreType, String trustStorePath,
-                           String trustStorePassword, String trustStoreType) {
+public record ServerConfig(String address, int port, int queryPort, Path filesDirectory, boolean useHttps,
+                           boolean autoSsl, String keyStorePath, String keyStorePassword, String keyStoreType,
+                           String trustStorePath, String trustStorePassword, String trustStoreType,
+                           boolean selfSigned) {
+
     public static final Logger LOGGER = LoggerFactory.getLogger(ServerConfig.class);
 
     public ServerConfig {

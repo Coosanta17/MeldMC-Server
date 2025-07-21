@@ -6,7 +6,8 @@ import net.coosanta.meldmc.mod.modlist.MeldData;
 import net.coosanta.meldmc.mod.network.MeldServer;
 import net.coosanta.meldmc.mod.network.ServerFactory;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.server.ServerStartingEvent;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -37,21 +38,30 @@ public class MeldMC {
     }
 
     @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event) {
+    public void onServerAboutToStart(ServerAboutToStartEvent event) {
         LOGGER.info("MeldMC Starting...");
 
         LOGGER.info("Starting client mod scanning process");
         modlistMap = ClientModScanner.scanClientMods(Paths.get("client-mods"));
+        LOGGER.info("Client mod scanning complete");
+
         meldData = new MeldData(FMLLoader.versionInfo().mcVersion(), MeldData.ModLoader.FORGE, ForgeVersion.getVersion(), modlistMap);
+
         try {
             meldServer = ServerFactory.createServer(Config.serverConfig);
             meldServer.start();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        LOGGER.info("Client mod scanning complete");
 
         LOGGER.info("MeldMC Started!");
+    }
+
+    @SubscribeEvent
+    public void onServerStopping(ServerStoppingEvent event) {
+        LOGGER.debug("Stopping MeldMC...");
+        meldServer.stop();
+        LOGGER.debug("MeldMC stopped.");
     }
 
     public static MeldData getMeldData() {

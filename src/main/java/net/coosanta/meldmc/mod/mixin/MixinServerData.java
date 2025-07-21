@@ -1,7 +1,10 @@
 package net.coosanta.meldmc.mod.mixin;
 
 import com.google.gson.JsonObject;
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import net.coosanta.meldmc.mod.Config;
 import net.minecraft.network.protocol.status.ServerStatus;
@@ -27,7 +30,7 @@ public class MixinServerData {
         // Create a custom codec to add the extra meldSupport field during encoding.
         CODEC = new Codec<>() {
             @Override
-            public <T> com.mojang.serialization.DataResult<T> encode(ServerStatus input, com.mojang.serialization.DynamicOps<T> ops, T prefix) {
+            public <T> DataResult<T> encode(ServerStatus input, DynamicOps<T> ops, T prefix) {
                 var result = originalCodec.encode(input, ops, prefix);
 
                 if (ops == JsonOps.INSTANCE && result.result().isPresent()) {
@@ -35,7 +38,9 @@ public class MixinServerData {
                     if (jsonElement instanceof JsonObject jsonObject) {
                         jsonObject.addProperty("meldSupport", true);
                         jsonObject.addProperty("meldAddress", Config.serverConfig.address());
-                        jsonObject.addProperty("meldPort", Config.serverConfig.port());
+                        jsonObject.addProperty("meldPort", (Config.serverConfig.queryPort() == 0) ? Config.serverConfig.port() : Config.serverConfig.queryPort());
+                        jsonObject.addProperty("meldIsHttps", Config.serverConfig.useHttps());
+                        jsonObject.addProperty("meldSelfSigned", Config.serverConfig.autoSsl() || Config.serverConfig.selfSigned());
                     }
                 }
 
@@ -43,7 +48,7 @@ public class MixinServerData {
             }
 
             @Override
-            public <T> com.mojang.serialization.DataResult<com.mojang.datafixers.util.Pair<ServerStatus, T>> decode(com.mojang.serialization.DynamicOps<T> ops, T input) {
+            public <T> DataResult<Pair<ServerStatus, T>> decode(DynamicOps<T> ops, T input) {
                 // Use the original decoder - custom field not needed on decoding (server side only)
                 return originalCodec.decode(ops, input);
             }

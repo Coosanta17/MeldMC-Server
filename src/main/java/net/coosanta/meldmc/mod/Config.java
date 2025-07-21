@@ -6,7 +6,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.config.ModConfigEvent;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Mod.EventBusSubscriber(modid = MeldMC.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
@@ -18,7 +17,7 @@ public class Config {
     private static final ForgeConfigSpec.ConfigValue<String> ADDRESS = BUILDER
             .comment(" MeldMC Config",
                     "",
-                    " The address Meld clients will query for mods.",
+                    " The address Meld clients will query for Meld mods data.",
                     " Set to a custom address for proxies or custom domain names")
             .define("address", "0.0.0.0");
 
@@ -28,6 +27,12 @@ public class Config {
                     " This is to send mod information and mods to the client.",
                     " Make sure to open the port on your firewall and router.")
             .defineInRange("port", 8080, 0, 65535);
+
+    private static final ForgeConfigSpec.IntValue QUERY_PORT = BUILDER
+            .comment("",
+                    " The port clients will query for Meld mods data.",
+                    " Set for proxies. Set to 0 if it is the same as the Meld listening port.")
+            .defineInRange("queryPort", 0, 0, 65535);
 
     private static final ForgeConfigSpec.ConfigValue<String> FILES_DIRECTORY = BUILDER
             .comment("",
@@ -81,26 +86,32 @@ public class Config {
                     " Type of truststore format")
             .define("trustStoreType", "PKCS12");
 
+    private static final ForgeConfigSpec.BooleanValue SELF_SIGNED = BUILDER
+            .comment("",
+                    " If the SSL certificate is Self-Signed.")
+            .define("selfSigned", true);
+
+
     static final ForgeConfigSpec SPEC = BUILDER.build();
 
     public static ServerConfig serverConfig;
 
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
-        String address = ADDRESS.get();
-        int port = PORT.get();
-        Path filesDirectory = Paths.get(FILES_DIRECTORY.get());
-        boolean useHttps = USE_HTTPS.get();
-        boolean autoSsl = AUTO_SSL.get();
-
-        String keyStorePath = KEYSTORE_PATH.get();
-        String keyStorePassword = KEYSTORE_PASSWORD.get();
-        String keyStoreType = KEYSTORE_TYPE.get();
-        String trustStorePath = TRUSTSTORE_PATH.get();
-        String trustStorePassword = TRUSTSTORE_PASSWORD.get();
-        String trustStoreType = TRUSTSTORE_TYPE.get();
-
-        serverConfig = new ServerConfig(address, port, filesDirectory, useHttps, autoSsl, keyStorePath,
-                keyStorePassword, keyStoreType, trustStorePath, trustStorePassword, trustStoreType);
+        serverConfig = new ServerConfig(
+                ADDRESS.get(),
+                PORT.get(),
+                QUERY_PORT.get(),
+                Paths.get(FILES_DIRECTORY.get()),
+                USE_HTTPS.get(),
+                AUTO_SSL.get(),
+                KEYSTORE_PATH.get(),
+                KEYSTORE_PASSWORD.get(),
+                KEYSTORE_TYPE.get(),
+                TRUSTSTORE_PATH.get(),
+                TRUSTSTORE_PASSWORD.get(),
+                TRUSTSTORE_TYPE.get(),
+                SELF_SIGNED.get()
+        );
     }
 }

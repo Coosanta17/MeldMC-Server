@@ -146,11 +146,11 @@ public class ClientModScanner {
                 newOrChangedHashes.add(hash);
                 modsMap.put(hash, currentMod);
                 cacheModified = true;
-                LOGGER.debug("New mod file detected: {}", currentMod.getFileName());
-            } else if (!cachedMod.getFileName().equals(currentMod.getFileName())) { // Changed file metadata
-                cachedMod.setFileName(currentMod.getFileName());
+                LOGGER.debug("New mod file detected: {}", currentMod.getFilename());
+            } else if (!cachedMod.getFilename().equals(currentMod.getFilename())) { // Changed file metadata
+                cachedMod.setFilename(currentMod.getFilename());
                 cacheModified = true;
-                LOGGER.debug("Modified mod file metadata detected: {}", currentMod.getFileName());
+                LOGGER.debug("Modified mod file metadata detected: {}", currentMod.getFilename());
             }
         }
 
@@ -169,7 +169,7 @@ public class ClientModScanner {
         if (!toRemove.isEmpty()) {
             for (String hash : toRemove) {
                 ClientMod removedMod = modsMap.remove(hash);
-                LOGGER.debug("Removed deleted mod file: {}", removedMod.getFileName());
+                LOGGER.debug("Removed deleted mod file: {}", removedMod.getFilename());
             }
             cacheModified = true;
             LOGGER.info("Removed {} deleted mod entries from cache", toRemove.size());

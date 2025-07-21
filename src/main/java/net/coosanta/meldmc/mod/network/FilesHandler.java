@@ -101,7 +101,7 @@ public class FilesHandler implements HttpHandler {
                     LOGGER.warn("Failed to find requested file with hash: {}", hash);
                     continue;
                 }
-                String fileName = modMap.get(hash).getFileName();
+                String fileName = modMap.get(hash).getFilename();
                 Path filePath = config.filesDirectory().resolve(fileName);
 
                 ZipEntry entry = new ZipEntry(fileName);
