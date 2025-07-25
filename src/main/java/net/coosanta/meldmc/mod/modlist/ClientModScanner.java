@@ -1,5 +1,7 @@
 package net.coosanta.meldmc.mod.modlist;
 
+import com.electronwill.nightconfig.core.UnmodifiableConfig;
+import com.electronwill.nightconfig.toml.TomlParser;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -8,11 +10,7 @@ import com.google.gson.reflect.TypeToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -22,6 +20,9 @@ import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.zip.ZipEntry;
 
 public class ClientModScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientModScanner.class);
@@ -97,7 +98,7 @@ public class ClientModScanner {
         }
     }
 
-    private static void saveModsCache(Path cacheFile) {
+    private static void saveModsCache(Path cacheFile) { // TODO: To prevent tampering of files, reload certain fields.
         try {
             String jsonContent = GSON.toJson(modsMap);
             Files.writeString(cacheFile, jsonContent, StandardCharsets.UTF_8);
@@ -113,25 +114,71 @@ public class ClientModScanner {
         try (var pathStream = Files.list(directory)) {
             pathStream
                     .filter(path -> path.toString().toLowerCase().endsWith(".jar"))
-                    .forEach(path -> {
-                        try {
-                            String hash = calculateSHA512(path.toFile());
-                            String fileName = path.getFileName().toString();
-
-                            ClientMod mod = new ClientMod(hash, fileName);
-                            currentMods.put(hash, mod);
-                            LOGGER.debug("Found mod file {}: {}", fileName, hash);
-                        } catch (Exception e) {
-                            LOGGER.error("Error processing file: {}", path.getFileName(), e);
-                        }
-                    });
-
+                    .forEach(path -> scanCurrentModFile(path, currentMods));
             LOGGER.info("Found {} mod files in directory", currentMods.size());
         } catch (IOException e) {
             LOGGER.error("Error scanning client-mods directory", e);
         }
 
         return currentMods;
+    }
+
+    private static void scanCurrentModFile(Path path, Map<String, ClientMod> currentMods) {
+        try {
+            File jarFile = path.toFile();
+            String hash = calculateSHA512(jarFile);
+            String fileName = path.getFileName().toString();
+
+            String modsToml = readModsToml(jarFile);
+
+            String version = "unknown";
+            String modname = "unknown";
+            String modId = "unknown";
+            String authors = "unknown";
+            String description = "No description";
+
+            if (modsToml != null) {
+                try {
+                    TomlParser parser = new TomlParser();
+                    UnmodifiableConfig config = parser.parse(new StringReader(modsToml));
+
+                    Object modsObj = config.get("mods");
+                    if (modsObj instanceof List<?> modsList) { // TODO: Multi-mod files
+                        if (!modsList.isEmpty() && modsList.get(0) instanceof UnmodifiableConfig firstMod) {
+                            version = firstMod.get("version");
+                            if (version.equals("${file.jarVersion}")) {
+                                String implVersion = getImplementationVersion(jarFile);
+                                if (implVersion != null) version = implVersion;
+                            }
+                            modname = firstMod.get("displayName");
+                            modId = firstMod.get("modId");
+                            authors = firstMod.getOrElse("authors", authors);
+                            description = firstMod.getOrElse("description", description);
+                        }
+                    }
+                } catch (Exception e) {
+                    LOGGER.warn("Failed to parse mods.toml for {}: {}", fileName, e.getMessage());
+                }
+            }
+
+            ClientMod mod = new ClientMod(version, hash, fileName, modname, modId, authors, description);
+            currentMods.put(hash, mod);
+            LOGGER.debug("Found mod file {}: {}", fileName, hash);
+        } catch (Exception e) {
+            LOGGER.error("Error processing file: {}", path.getFileName(), e);
+        }
+    }
+
+    public static String getImplementationVersion(File jarFile) {
+        try (JarFile jar = new JarFile(jarFile)) {
+            Manifest manifest = jar.getManifest();
+            if (manifest != null) {
+                return manifest.getMainAttributes().getValue("Implementation-Version");
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error getting mod implementation version for mod: {}", jarFile.toString(), e);
+        }
+        return null;
     }
 
     private static List<String> detectChanges(Map<String, ClientMod> currentMods) {
@@ -289,5 +336,18 @@ public class ClientModScanner {
             os.write(input, 0, input.length);
         }
         return connection;
+    }
+
+    public static String readModsToml(File jarFile) throws IOException {
+        try (JarFile jar = new JarFile(jarFile)) {
+            ZipEntry entry = jar.getEntry("META-INF/mods.toml");
+            if (entry != null) {
+                try (InputStream is = jar.getInputStream(entry);
+                     Scanner scanner = new Scanner(is, StandardCharsets.UTF_8)) {
+                    return scanner.useDelimiter("\\A").next();
+                }
+            }
+        }
+        return null;
     }
 }
