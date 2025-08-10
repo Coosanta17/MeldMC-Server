@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +15,7 @@ import java.io.*;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,7 +28,7 @@ import java.util.zip.ZipEntry;
 
 public class ClientModScanner {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClientModScanner.class);
-    private static final String MODRINTH_API_URL = "https://api.modrinth.com/v2/version_files";
+    private static final String MODRINTH_API_URL = "https://api.modrinth.com/v2/";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String CACHE_FILE_NAME = "client-mods.json";
 
@@ -98,7 +100,7 @@ public class ClientModScanner {
         }
     }
 
-    private static void saveModsCache(Path cacheFile) { // TODO: To prevent tampering of files, reload certain fields.
+    private static void saveModsCache(Path cacheFile) { // TODO: To prevent tampering of files, do not save and instead reload certain fields.
         try {
             String jsonContent = GSON.toJson(modsMap);
             Files.writeString(cacheFile, jsonContent, StandardCharsets.UTF_8);
@@ -128,6 +130,7 @@ public class ClientModScanner {
             File jarFile = path.toFile();
             String hash = calculateSHA512(jarFile);
             String fileName = path.getFileName().toString();
+            long fileSize = jarFile.length();
 
             String modsToml = readModsToml(jarFile);
 
@@ -161,7 +164,7 @@ public class ClientModScanner {
                 }
             }
 
-            ClientMod mod = new ClientMod(version, hash, fileName, modname, modId, authors, description);
+            ClientMod mod = new ClientMod(version, hash, fileName, modname, modId, authors, description, fileSize);
             currentMods.put(hash, mod);
             LOGGER.debug("Found mod file {}: {}", fileName, hash);
         } catch (Exception e) {
@@ -248,32 +251,10 @@ public class ClientModScanner {
 
             String jsonPayload = GSON.toJson(requestBody);
 
-            HttpURLConnection connection = setUpHttpConnection(jsonPayload);
+            HttpURLConnection connection = setUpHttpConnection(MODRINTH_API_URL + "version_files", "POST", jsonPayload);
 
-            int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
-                    StringBuilder response = new StringBuilder();
-                    String responseLine;
-                    while ((responseLine = br.readLine()) != null) {
-                        response.append(responseLine.trim());
-                    }
-
-                    Type mapType = new TypeToken<Map<String, Map<String, Object>>>() {
-                    }.getType();
-                    return GSON.fromJson(response.toString(), mapType);
-                }
-            } else {
-                LOGGER.error("Failed to get response from Modrinth API. Response code: {}", responseCode);
-                try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getErrorStream(), StandardCharsets.UTF_8))) {
-                    StringBuilder response = new StringBuilder();
-                    String responseLine;
-                    while ((responseLine = br.readLine()) != null) {
-                        response.append(responseLine.trim());
-                    }
-                    LOGGER.error("Error response: {}", response);
-                }
-            }
+            return getConnectionResponse(connection, new TypeToken<>() {
+            });
 
         } catch (Exception e) {
             LOGGER.error("Error communicating with Modrinth API", e);
@@ -281,7 +262,37 @@ public class ClientModScanner {
         return null;
     }
 
+    private static <T> @Nullable T getConnectionResponse(HttpURLConnection connection, TypeToken<T> returnType) throws IOException {
+        int responseCode = connection.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8))) {
+                StringBuilder response = new StringBuilder();
+                String responseLine;
+                while ((responseLine = br.readLine()) != null) {
+                    response.append(responseLine.trim());
+                }
+                return GSON.fromJson(response.toString(), returnType);
+            }
+        } else {
+            LOGGER.error("Failed to get response from Modrinth API. Response code: {}", responseCode);
+            InputStream errorStream = connection.getErrorStream();
+            if (errorStream != null) {
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(errorStream, StandardCharsets.UTF_8))) {
+                    StringBuilder response = new StringBuilder();
+                    String responseLine;
+                    while ((responseLine = br.readLine()) != null) {
+                        response.append(responseLine.trim());
+                    }
+                    LOGGER.error("Response error: {}", response);
+                }
+            }
+            return null;
+        }
+    }
+
     public static void editClientModsFromResponse(Map<String, Map<String, Object>> modInfo) {
+        var idMap = new HashMap<String, String>();
+
         for (Map.Entry<String, Map<String, Object>> entry : modInfo.entrySet()) {
             String hash = entry.getKey();
 
@@ -314,26 +325,76 @@ public class ClientModScanner {
             }
 
             String url = (String) primaryFile.get("url");
+            String projectId = (String) entry.getValue().get("project_id");
 
-            if (url != null) {
+            if (url != null || projectId != null) {
                 ClientMod mod = modsMap.get(hash);
                 mod.setUrl(url);
-                modsMap.replace(hash, mod);
+                mod.setProjectId(projectId);
+                idMap.put(projectId, hash);
             }
+        }
+
+        getProjectUrlsFromProjectIds(idMap);
+    }
+
+    private static void getProjectUrlsFromProjectIds(Map<String, String> projectIds) { // Key: ID, Value: Hash
+        LOGGER.debug("Getting project URLs from {} project IDs", projectIds.size());
+
+        if (projectIds.isEmpty()) return;
+
+        JsonArray projects = new JsonArray();
+        for (var projectId : projectIds.keySet()) {
+            projects.add(projectId);
+        }
+
+        String jsonPayload = GSON.toJson(projects);
+        String encodedIds = URLEncoder.encode(jsonPayload, StandardCharsets.UTF_8);
+        String urlString = MODRINTH_API_URL + "projects?ids=" + encodedIds; // TODO: Batching long IDs.
+        try {
+            HttpURLConnection connection = setUpHttpConnection(urlString, "GET");
+
+            List<Map<String, Object>> projectsResponse = getConnectionResponse(connection, new TypeToken<>() {
+            });
+
+            if (projectsResponse == null) {
+                throw new NullPointerException("Null response from Modrinth API.");
+            }
+
+            for (var project : projectsResponse) {
+                if (project.get("project_type") instanceof String projectType &&
+                        project.get("slug") instanceof String projectSlug &&
+                        project.get("id") instanceof String projectId) {
+
+                    String projectUrl = "https://modrinth.com/" + projectType + "/" + projectSlug;
+
+                    modsMap.get(projectIds.get(projectId)).setProjectUrl(projectUrl);
+                } else {
+                    throw new IllegalArgumentException("Invalid project data from Modrinth API.");
+                }
+            }
+        } catch (Exception e) {
+            LOGGER.error("Failed to get project URLs from Modrinth", e);
         }
     }
 
-    private static HttpURLConnection setUpHttpConnection(String jsonPayload) throws IOException {
-        URL url = new URL(MODRINTH_API_URL);
+    private static HttpURLConnection setUpHttpConnection(String urlString, String method) throws IOException {
+        return setUpHttpConnection(urlString, method, null);
+    }
+
+    private static HttpURLConnection setUpHttpConnection(String urlString, String method, @Nullable String jsonPayload) throws IOException {
+        URL url = new URL(urlString);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("POST");
+        connection.setRequestMethod(method);
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestProperty("Accept", "application/json");
-        connection.setDoOutput(true);
 
-        try (OutputStream os = connection.getOutputStream()) {
-            byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
-            os.write(input, 0, input.length);
+        if (jsonPayload != null) {
+            connection.setDoOutput(true);
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
+                os.write(input, 0, input.length);
+            }
         }
         return connection;
     }
