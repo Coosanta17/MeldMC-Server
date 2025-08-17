@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.Collection;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -33,7 +33,7 @@ public class FilesHandler implements HttpHandler {
 
         try {
             String requestBody = readRequestBody(exchange);
-            List<String> requestedHashes = objectMapper.readValue(requestBody, new TypeReference<>() {
+            Collection<String> requestedHashes = objectMapper.readValue(requestBody, new TypeReference<>() {
             });
 
             if (requestedHashes == null || requestedHashes.isEmpty()) {
@@ -90,7 +90,7 @@ public class FilesHandler implements HttpHandler {
         return hash != null && hash.matches("^[a-fA-F0-9]{128}$");
     }
 
-    private int createZipResponse(ByteArrayOutputStream baos, List<String> requestedHashes)
+    private int createZipResponse(ByteArrayOutputStream baos, Collection<String> requestedHashes)
             throws IOException {
         int filesFound = 0;
         var modMap = MeldMC.getMeldData().modMap();

@@ -228,14 +228,15 @@ public class ClientModScanner {
 
     private static String calculateSHA512(File file) throws IOException, NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-512");
-        byte[] fileBytes = Files.readAllBytes(file.toPath());
-        byte[] hashBytes = digest.digest(fileBytes);
-
-        StringBuilder sb = new StringBuilder();
-        for (byte b : hashBytes) {
-            sb.append(String.format("%02x", b));
+        try (InputStream is = Files.newInputStream(file.toPath())) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = is.read(buffer)) != -1) {
+                digest.update(buffer, 0, bytesRead);
+            }
         }
-        return sb.toString();
+        byte[] hashBytes = digest.digest();
+        return HexFormat.of().formatHex(hashBytes);
     }
 
     private static Map<String, Map<String, Object>> sendHashesToModrinth(List<String> hashes) {
