@@ -169,6 +169,7 @@ dependencies {
 }
 
 shadowJar {
+    exclude 'META-INF/versions/**' // <-- This is very important!!!!! (ASM panics when it sees JDK-18+ class files)
     archiveClassifier = ''
     configurations = [project.configurations.shade]
 
@@ -251,4 +252,8 @@ assemble.dependsOn shadowJar
 
 reobf {
     shadowJar {}
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release.set(17)
 }
