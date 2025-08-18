@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id 'eclipse'
     id 'idea'
@@ -169,7 +171,9 @@ dependencies {
 }
 
 shadowJar {
+    minimize()
     exclude 'META-INF/versions/**' // <-- This is very important!!!!! (ASM panics when it sees JDK-18+ class files)
+
     archiveClassifier = ''
     configurations = [project.configurations.shade]
 
