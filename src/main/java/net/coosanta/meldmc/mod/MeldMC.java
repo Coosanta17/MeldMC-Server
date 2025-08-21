@@ -20,11 +20,10 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Paths;
 import java.util.Map;
 
-// The value here should match an entry in the META-INF/mods.toml file
 @Mod(MeldMC.MODID)
 public class MeldMC {
     public static final String MODID = "meldmc";
-    private static final Logger LOGGER = LoggerFactory.getLogger(MeldMC.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(MeldMC.class);
 
     private static Map<String, ClientMod> modlistMap;
     private static MeldData meldData;

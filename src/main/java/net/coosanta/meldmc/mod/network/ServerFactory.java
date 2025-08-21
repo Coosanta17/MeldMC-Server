@@ -4,8 +4,6 @@ import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
 import com.sun.net.httpserver.HttpsServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -17,8 +15,9 @@ import java.net.InetSocketAddress;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 
+import static net.coosanta.meldmc.mod.MeldMC.LOGGER;
+
 public class ServerFactory {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ServerFactory.class);
 
     public static MeldServer createServer(ServerConfig config) throws Exception {
         if (config.useHttps()) {
@@ -39,7 +38,7 @@ public class ServerFactory {
         }
 
         private void setupEndpoints() {
-            server.createContext("/info", new InfoHandler(config));
+            server.createContext("/info", new InfoHandler());
             server.createContext("/files", new FilesHandler(config));
         }
 
@@ -158,7 +157,7 @@ public class ServerFactory {
         }
 
         private void setupEndpoints() {
-            server.createContext("/info", new InfoHandler(config));
+            server.createContext("/info", new InfoHandler());
             server.createContext("/files", new FilesHandler(config));
         }
 

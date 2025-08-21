@@ -8,8 +8,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.Type;
@@ -26,8 +24,9 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 
+import static net.coosanta.meldmc.mod.MeldMC.LOGGER;
+
 public class ClientModScanner {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClientModScanner.class);
     private static final String MODRINTH_API_URL = "https://api.modrinth.com/v2/";
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String CACHE_FILE_NAME = "client-mods.json";
@@ -364,8 +363,8 @@ public class ClientModScanner {
 
             for (var project : projectsResponse) {
                 if (project.get("project_type") instanceof String projectType &&
-                        project.get("slug") instanceof String projectSlug &&
-                        project.get("id") instanceof String projectId) {
+                    project.get("slug") instanceof String projectSlug &&
+                    project.get("id") instanceof String projectId) {
 
                     String projectUrl = "https://modrinth.com/" + projectType + "/" + projectSlug;
 

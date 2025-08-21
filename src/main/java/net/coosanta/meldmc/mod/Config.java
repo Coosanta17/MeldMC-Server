@@ -54,6 +54,7 @@ public class Config {
             .define("autoSsl", true);
 
 
+    // TODO: test custom SSL
     private static final ForgeConfigSpec.ConfigValue<String> KEYSTORE_PATH = BUILDER
             .comment("",
                     "## The following config only applies if autoSsl is DISABLED ###",

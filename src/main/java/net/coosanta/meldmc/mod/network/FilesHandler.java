@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import net.coosanta.meldmc.mod.MeldMC;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -15,8 +13,9 @@ import java.util.Collection;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static net.coosanta.meldmc.mod.MeldMC.LOGGER;
+
 public class FilesHandler implements HttpHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FilesHandler.class);
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ServerConfig config;
 

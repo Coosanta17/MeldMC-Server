@@ -4,20 +4,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import net.coosanta.meldmc.mod.MeldMC;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 
-public class InfoHandler implements HttpHandler {
-    private static final Logger LOGGER = LoggerFactory.getLogger(InfoHandler.class);
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    private final ServerConfig config;
+import static net.coosanta.meldmc.mod.MeldMC.LOGGER;
 
-    public InfoHandler(ServerConfig config) {
-        this.config = config;
+public class InfoHandler implements HttpHandler {
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public InfoHandler() {
     }
 
     @Override

@@ -1,18 +1,15 @@
 package net.coosanta.meldmc.mod.network;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import static net.coosanta.meldmc.mod.MeldMC.LOGGER;
 
 public record ServerConfig(String address, int port, int queryPort, Path filesDirectory, boolean useHttps,
                            boolean autoSsl, String keyStorePath, String keyStorePassword, String keyStoreType,
                            String trustStorePath, String trustStorePassword, String trustStoreType,
                            boolean selfSigned) {
-
-    public static final Logger LOGGER = LoggerFactory.getLogger(ServerConfig.class);
 
     public ServerConfig {
         if (useHttps && !autoSsl) {
@@ -26,8 +23,8 @@ public record ServerConfig(String address, int port, int queryPort, Path filesDi
 
     private boolean hasManualSslSettings() {
         return isNotBlank(keyStorePath()) || isNotBlank(keyStorePassword()) ||
-                isNotBlank(keyStoreType()) || isNotBlank(trustStorePath()) ||
-                isNotBlank(trustStorePassword()) || isNotBlank(trustStoreType());
+               isNotBlank(keyStoreType()) || isNotBlank(trustStorePath()) ||
+               isNotBlank(trustStorePassword()) || isNotBlank(trustStoreType());
     }
 
     private boolean isNotBlank(String str) {
