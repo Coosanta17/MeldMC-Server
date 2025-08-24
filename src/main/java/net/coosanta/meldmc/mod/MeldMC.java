@@ -17,7 +17,6 @@ import net.minecraftforge.versions.forge.ForgeVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Paths;
 import java.util.Map;
 
 @Mod(MeldMC.MODID)
@@ -41,10 +40,12 @@ public class MeldMC {
         LOGGER.info("MeldMC Starting...");
 
         LOGGER.info("Starting client mod scanning process");
-        modlistMap = ClientModScanner.scanClientMods(Paths.get("client-mods"));
+        modlistMap = ClientModScanner.scanClientMods(Config.serverConfig.filesDirectory());
         LOGGER.info("Client mod scanning complete");
 
-        meldData = new MeldData(FMLLoader.versionInfo().mcVersion(), MeldData.ModLoader.FORGE, ForgeVersion.getVersion(), modlistMap);
+        String mcVersion = FMLLoader.versionInfo().mcVersion();
+        String forgeVersion = ForgeVersion.getVersion();
+        meldData = new MeldData(mcVersion, MeldData.ModLoader.FORGE, forgeVersion, mcVersion + "-forge-" + forgeVersion, modlistMap);
 
         try {
             meldServer = ServerFactory.createServer(Config.serverConfig);
