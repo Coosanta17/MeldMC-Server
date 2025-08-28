@@ -388,6 +388,7 @@ public class ClientModScanner {
         connection.setRequestMethod(method);
         connection.setRequestProperty("Content-Type", "application/json");
         connection.setRequestProperty("Accept", "application/json");
+        connection.setRequestProperty("User-Agent", "Coosanta17/MeldMC (server) (https://github.com/Coosanta17/MeldMC-Server)");
 
         if (jsonPayload != null) {
             connection.setDoOutput(true);
