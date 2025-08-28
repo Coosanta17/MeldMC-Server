@@ -113,7 +113,7 @@ public class ServerFactory {
         private SSLContext createAutoSSLContext() throws Exception {
             LOGGER.debug("Creating Self-Signed certificate.");
 
-            KeyStore keyStore = SelfSignedCertificateGenerator.generateSelfSignedKeyStore(config.address());
+            KeyStore keyStore = SelfSignedCertificateGenerator.generateSelfSignedKeyStore(config.queryAddress());
 
             KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
             kmf.init(keyStore, new char[0]);

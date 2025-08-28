@@ -12,46 +12,44 @@ import java.nio.file.Paths;
 public class Config {
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 
-    // TODO: Use better config builder.
-
-    private static final ForgeConfigSpec.ConfigValue<String> ADDRESS = BUILDER
-            .comment(" MeldMC Config",
-                    "",
-                    " The address Meld clients will query for Meld mods data.",
-                    " Set to a custom address for proxies or custom domain names")
-            .define("address", "0.0.0.0");
+    // TODO: Use a better config builder.
 
     private static final ForgeConfigSpec.IntValue PORT = BUILDER
             .comment("",
-                    " The port Meld will listen on.",
+                    " The port Meld will bind to and listen on.",
                     " This is to send mod information and mods to the client.",
                     " Make sure to open the port on your firewall and router.")
-            .defineInRange("port", 8080, 0, 65535);
+            .defineInRange("bind-port", 8080, 0, 65535);
 
-    private static final ForgeConfigSpec.IntValue QUERY_PORT = BUILDER
+    private static final ForgeConfigSpec.ConfigValue<String> QUERY_ADDRESS = BUILDER
             .comment("",
-                    " The port clients will query for Meld mods data.",
-                    " Set for proxies. Set to 0 if it is the same as the Meld listening port.")
-            .defineInRange("queryPort", 0, 0, 65535);
+                    " The address and port clients will query for Meld mods data.",
+                    " Useful for proxies or custom domains. Set to 0.0.0.0:0 for Minecraft server address and Meld port.",
+                    " You can set this to any web address. omit the protocol to use default value.",
+                    " Examples:",
+                    " server.com:0 -> clients query server.com with Meld bind port.",
+                    " 0.0.0.0:1234 -> clients query server address with a port of 1234",
+                    " https://server.com:9876/meld/ -> clients query server.com at port 9876 with resource path prefix '/meld/' using HTTPS protocol.")
+            .define("query-address", "0.0.0.0:0");
 
     private static final ForgeConfigSpec.ConfigValue<String> FILES_DIRECTORY = BUILDER
             .comment("",
                     " Directory where client mod files are stored.",
                     " The contents of this directory will be sent to the client as the mods to use when joining this server.")
-            .define("filesDirectory", "./client-mods");
+            .define("files-directory", "./client-mods");
 
     private static final ForgeConfigSpec.BooleanValue USE_HTTPS = BUILDER
             .comment("",
                     " If the server should use HTTPS for secure connections.",
                     " It is highly recommended to secure data from being manipulated.",
                     " only disable if you know what you are doing!")
-            .define("useHttps", true);
+            .define("use-https", true);
 
     private static final ForgeConfigSpec.BooleanValue AUTO_SSL = BUILDER
             .comment("",
                     " If the server will automatically set up SSL for HTTPS connections.",
                     " Make false for custom certificates.")
-            .define("autoSsl", true);
+            .define("auto-ssl", true);
 
 
     // TODO: test custom SSL
@@ -60,37 +58,37 @@ public class Config {
                     "## The following config only applies if autoSsl is DISABLED ###",
                     "",
                     " Path to the SSL keystore file for HTTPS connections.")
-            .define("keyStorePath", "config/meldmc/keystore.jks");
+            .define("keystore-path", "config/meldmc/keystore.jks");
 
     private static final ForgeConfigSpec.ConfigValue<String> KEYSTORE_PASSWORD = BUILDER
             .comment("",
                     " Password for the SSL keystore (if any)")
-            .define("keyStorePassword", "");
+            .define("keystore-password", "");
 
     private static final ForgeConfigSpec.ConfigValue<String> KEYSTORE_TYPE = BUILDER
             .comment("",
                     " Type of keystore format")
-            .define("keyStoreType", "PKCS12");
+            .define("keystore-type", "PKCS12");
 
     private static final ForgeConfigSpec.ConfigValue<String> TRUSTSTORE_PATH = BUILDER
             .comment("",
                     " Path to the SSL truststore file")
-            .define("trustStorePath", "config/meldmc/truststore.jks");
+            .define("truststore-path", "config/meldmc/truststore.jks");
 
     private static final ForgeConfigSpec.ConfigValue<String> TRUSTSTORE_PASSWORD = BUILDER
             .comment("",
                     " Password for the SSL truststore (if any)")
-            .define("trustStorePassword", "");
+            .define("truststore-password", "");
 
     private static final ForgeConfigSpec.ConfigValue<String> TRUSTSTORE_TYPE = BUILDER
             .comment("",
                     " Type of truststore format")
-            .define("trustStoreType", "PKCS12");
+            .define("truststore-type", "PKCS12");
 
     private static final ForgeConfigSpec.BooleanValue SELF_SIGNED = BUILDER
             .comment("",
                     " If the SSL certificate is Self-Signed.")
-            .define("selfSigned", true);
+            .define("self-signed", true);
 
 
     static final ForgeConfigSpec SPEC = BUILDER.build();
@@ -100,9 +98,8 @@ public class Config {
     @SubscribeEvent
     static void onLoad(final ModConfigEvent event) {
         serverConfig = new ServerConfig(
-                ADDRESS.get(),
                 PORT.get(),
-                QUERY_PORT.get(),
+                QUERY_ADDRESS.get(),
                 Paths.get(FILES_DIRECTORY.get()),
                 USE_HTTPS.get(),
                 AUTO_SSL.get(),

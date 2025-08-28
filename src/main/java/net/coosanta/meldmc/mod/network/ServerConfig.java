@@ -6,12 +6,16 @@ import java.nio.file.Paths;
 
 import static net.coosanta.meldmc.mod.MeldMC.LOGGER;
 
-public record ServerConfig(String address, int port, int queryPort, Path filesDirectory, boolean useHttps,
+public record ServerConfig(int port, String queryAddress, Path filesDirectory, boolean useHttps,
                            boolean autoSsl, String keyStorePath, String keyStorePassword, String keyStoreType,
                            String trustStorePath, String trustStorePassword, String trustStoreType,
                            boolean selfSigned) {
 
     public ServerConfig {
+        if (!queryAddress.matches(".*:\\d+.*")) {
+            throw new IllegalArgumentException("query-address must contain a port number");
+        }
+
         if (useHttps && !autoSsl) {
             validateManualSSLConfig();
         }
@@ -19,6 +23,10 @@ public record ServerConfig(String address, int port, int queryPort, Path filesDi
         if (autoSsl && hasManualSslSettings()) {
             LOGGER.info("Ignoring manual SSL settings because 'autoSsl' is true.");
         }
+    }
+
+    public String getReplacedAddress() {
+        return queryAddress.replaceAll(":(0+)(?=(/|\\?|#|$))", ":" + port);
     }
 
     private boolean hasManualSslSettings() {

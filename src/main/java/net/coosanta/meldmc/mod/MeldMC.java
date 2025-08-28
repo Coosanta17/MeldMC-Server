@@ -22,9 +22,8 @@ import java.util.Map;
 @Mod(MeldMC.MODID)
 public class MeldMC {
     public static final String MODID = "meldmc";
-    public static final Logger LOGGER = LoggerFactory.getLogger(MeldMC.class);
+    public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
 
-    private static Map<String, ClientMod> modlistMap;
     private static MeldData meldData;
     private static MeldServer meldServer;
 
@@ -40,7 +39,7 @@ public class MeldMC {
         LOGGER.info("MeldMC Starting...");
 
         LOGGER.info("Starting client mod scanning process");
-        modlistMap = ClientModScanner.scanClientMods(Config.serverConfig.filesDirectory());
+        Map<String, ClientMod> modlistMap = ClientModScanner.scanClientMods(Config.serverConfig.filesDirectory());
         LOGGER.info("Client mod scanning complete");
 
         String mcVersion = FMLLoader.versionInfo().mcVersion();

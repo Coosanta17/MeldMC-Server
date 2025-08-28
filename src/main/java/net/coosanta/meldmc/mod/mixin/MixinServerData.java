@@ -37,8 +37,7 @@ public class MixinServerData {
                     Object jsonElement = result.result().get();
                     if (jsonElement instanceof JsonObject jsonObject) {
                         jsonObject.addProperty("meldSupport", true);
-                        jsonObject.addProperty("meldAddress", Config.serverConfig.address());
-                        jsonObject.addProperty("meldPort", (Config.serverConfig.queryPort() == 0) ? Config.serverConfig.port() : Config.serverConfig.queryPort());
+                        jsonObject.addProperty("meldAddress", Config.serverConfig.getReplacedAddress());
                         jsonObject.addProperty("meldIsHttps", Config.serverConfig.useHttps());
                         jsonObject.addProperty("meldSelfSigned", Config.serverConfig.autoSsl() || Config.serverConfig.selfSigned());
                     }

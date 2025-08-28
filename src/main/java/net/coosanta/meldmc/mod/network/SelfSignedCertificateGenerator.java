@@ -23,7 +23,7 @@ public class SelfSignedCertificateGenerator {
     }
 
     public static KeyStore generateSelfSignedKeyStore(String hostname) throws Exception {
-        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA", "BC");
+        KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048, new SecureRandom());
         KeyPair keyPair = keyGen.generateKeyPair();
 
@@ -51,7 +51,7 @@ public class SelfSignedCertificateGenerator {
                 serialNumber,
                 validFrom,
                 validTo,
-                subject, // subject (same as issuer for self-signed)
+                subject, // same as issuer for self-signed
                 subjectPublicKeyInfo
         );
 
