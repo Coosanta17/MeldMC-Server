@@ -159,6 +159,7 @@ public class ClientModScanner {
                         }
                     }
                 } catch (Exception e) {
+                    // FIXME Failed to parse mods.toml for DistantHorizons-2.3.4-b-1.20.1-fabric-forge.jar: class java.util.ArrayList cannot be cast to class java.lang.String (java.util.ArrayList and java.lang.String are in module java.base of loader 'bootstrap')
                     LOGGER.warn("Failed to parse mods.toml for {}: {}", fileName, e.getMessage());
                 }
             }
