@@ -1,0 +1,13 @@
+plugins {
+    id 'unimined-fabric'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+repositories {
+
+}
+
+dependencies {
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${gradle.ext.fabric_api_version}"
+    implementation project(path: ':common', configuration: 'shadow')
+}

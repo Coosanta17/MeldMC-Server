@@ -1,0 +1,12 @@
+plugins {
+    id 'unimined-forge' // <-- Go here for Forge mixin configuration (CTRL+Left Click)
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+repositories {
+
+}
+
+dependencies {
+    implementation project(path: ':common', configuration: 'shadow')
+}
