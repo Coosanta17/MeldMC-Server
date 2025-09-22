@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 plugins {
     id 'root'
     id 'xyz.wagyourtail.unimined' version '1.4.1-SNAPSHOT' apply false
@@ -14,7 +12,7 @@ subprojects {
     apply plugin: 'com.github.johnrengelman.shadow'
 
     configurations {
-        shade // I recommend using "addJar" instead of "shade"
+        shade
         implementation.extendsFrom shade
     }
 
@@ -30,47 +28,35 @@ subprojects {
     }
 
     shadowJar {
-        exclude 'META-INF/versions/**' // <-- This is very important!!!!! (ASM panics when it sees JDK-18+ class files)
-
         archiveClassifier = 'shadow'
         configurations = [project.configurations.shade]
 
-        relocate 'org.bouncycastle', "${project.group}.relocated.org.bouncycastle"
-        relocate 'com.fasterxml.jackson', "${project.group}.relocated.com.fasterxml.jackson"
-        relocate 'org.yaml', "${project.group}.relocated.org.yaml"
-    }
+        mergeServiceFiles()
 
-    assemble.dependsOn shadowJar
+        // FIXME: relocating not being properly transferred to non-common classes
+//        relocate 'org.bouncycastle', "${project.group}.relocated.org.bouncycastle"
+//        relocate 'com.fasterxml.jackson', "${project.group}.relocated.com.fasterxml.jackson"
+//        relocate 'org.yaml', "${project.group}.relocated.org.yaml"
+    }
 }
+
+def buildsForRaw = (gradle.hasProperty('builds_for') ? (String) gradle.builds_for : '')
+def buildsFor = buildsForRaw.tokenize(',').collect { it.trim() }.findAll { it }
+def hasNeoForge = buildsFor.contains('neoforge')
 
 forgix {
     destinationDirectory = layout.projectDirectory.dir("build/forgix")
 
-    forge {
-        inputJar.set(
-                project(":forge")
-                        .tasks
-                        .named("shadowJar", ShadowJar)
-                        .flatMap { it.archiveFile } as Provider<? extends RegularFile>
-        )
+    // FIXME: duplicate common classes being made with suffixes unnecessarily
+    merge("common") {
+        inputJar = project(":common").tasks.shadowJar.archiveFile
     }
-    fabric {
-        inputJar.set(
-                project(":fabric")
-                        .tasks
-                        .named("shadowJar", ShadowJar)
-                        .flatMap { it.archiveFile } as Provider<? extends RegularFile>
-        )
-    }
-    neoforge {
-        inputJar.set(
-                project(":neoforge")
-                        .tasks
-                        .named("shadowJar", ShadowJar)
-                        .flatMap { it.archiveFile } as Provider<? extends RegularFile>
-        )
+
+    fabric()
+    forge()
+    if (hasNeoForge) {
+        neoforge()
     }
 
     autoRun = true
 }
-

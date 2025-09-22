@@ -4,6 +4,6 @@
   "package": "net.coosanta.meldmc.mod.mixins",
   "compatibilityLevel": "JAVA_${java_version}",
   "mixins": [
-    "MixinServerData"
+    "MixinServerData_common"
   ]
 }

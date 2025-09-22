@@ -9,10 +9,10 @@ public class MeldMCFabric implements ModInitializer {
     public void onInitialize() {
         String mcVersion = FabricLoader.getInstance().getModContainer("minecraft")
                 .map(mod -> mod.getMetadata().getVersion().getFriendlyString())
-                .orElse("unknown");
+                .orElseThrow(() -> new IllegalStateException("Minecraft version not found"));
         String loaderVersion = FabricLoader.getInstance().getModContainer("fabricloader")
                 .map(mod -> mod.getMetadata().getVersion().getFriendlyString())
-                .orElse("unknown");
+                .orElseThrow(() -> new IllegalStateException("Fabric version not found"));
         MeldMC.init(mcVersion, MeldData.ModLoader.FABRIC, loaderVersion);
     }
 }
