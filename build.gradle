@@ -1,3 +1,5 @@
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+
 plugins {
     id 'root'
     id 'xyz.wagyourtail.unimined' version '1.4.1-SNAPSHOT' apply false
@@ -5,6 +7,11 @@ plugins {
     id 'xyz.wagyourtail.manifold' version '1.0.0-SNAPSHOT'
     id 'io.github.pacifistmc.forgix' version '2.+'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+configurations {
+    shade
+    implementation.extendsFrom shade
 }
 
 subprojects {
@@ -30,13 +37,7 @@ subprojects {
     shadowJar {
         archiveClassifier = 'shadow'
         configurations = [project.configurations.shade]
-
         mergeServiceFiles()
-
-        // FIXME: relocating not being properly transferred to non-common classes
-//        relocate 'org.bouncycastle', "${project.group}.relocated.org.bouncycastle"
-//        relocate 'com.fasterxml.jackson', "${project.group}.relocated.com.fasterxml.jackson"
-//        relocate 'org.yaml', "${project.group}.relocated.org.yaml"
     }
 }
 
@@ -46,11 +47,6 @@ def hasNeoForge = buildsFor.contains('neoforge')
 
 forgix {
     destinationDirectory = layout.projectDirectory.dir("build/forgix")
-
-    // FIXME: duplicate common classes being made with suffixes unnecessarily
-    merge("common") {
-        inputJar = project(":common").tasks.shadowJar.archiveFile
-    }
 
     fabric()
     forge()
