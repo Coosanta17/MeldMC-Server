@@ -1,0 +1,29 @@
+name: Build Multiversion Multi-Platform Mod
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: false
+
+      - name: Make Gradle Wrapper and Build Script executable
+        run: chmod +x gradlew; chmod +x buildall.sh
+
+      - name: Build with script
+        run: ./buildall.sh

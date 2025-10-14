@@ -149,7 +149,7 @@ public class ClientModScanner {
                     );
                     Object modsObj = config.get("mods");
                     if (modsObj instanceof List<?> modsList) {
-                        if (!modsList.isEmpty() && modsList.getFirst() instanceof Map<?, ?> firstModRaw) {
+                        if (!modsList.isEmpty() && modsList.get(0) instanceof Map<?, ?> firstModRaw) {
                             @SuppressWarnings("unchecked")
                             Map<String, Object> firstMod = (Map<String, Object>) firstModRaw;
                             Object v = firstMod.get("version");
@@ -342,7 +342,7 @@ public class ClientModScanner {
 
             // If no primary file found, use the first one - extreme edge case (I trust you Modrinth!!)
             if (primaryFile == null) {
-                primaryFile = files.getFirst();
+                primaryFile = files.get(0);
             }
 
             String url = (String) primaryFile.get("url");

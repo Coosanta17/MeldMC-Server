@@ -1,5 +1,7 @@
 package net.coosanta.meldmc.mod.modsinfo;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,8 +18,17 @@ public class ClientMod {
     private @Nullable String projectId;
     private @NotNull String filename;
 
-    public ClientMod(String modVersion, String hash, @NotNull String filename, String modname,
-                     String modId, String authors, String description, long fileSize) {
+    @JsonCreator
+    public ClientMod(
+            @JsonProperty("modVersion") String modVersion,
+            @JsonProperty("hash") String hash,
+            @JsonProperty("filename") @NotNull String filename,
+            @JsonProperty("modname") String modname,
+            @JsonProperty("modId") String modId,
+            @JsonProperty("authors") String authors,
+            @JsonProperty("description") String description,
+            @JsonProperty("fileSize") long fileSize
+    ) {
         this.modVersion = modVersion;
         this.hash = hash;
         this.url = null;

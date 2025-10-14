@@ -16,6 +16,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static net.coosanta.meldmc.mod.MeldMC.LOGGER;
+
 @Mixin(ServerStatus.class)
 public class MixinServerData {
     @Shadow
@@ -28,6 +30,7 @@ public class MixinServerData {
         final Codec<ServerStatus> originalCodec = CODEC;
 
         // Create a custom codec to add the extra meldSupport field during encoding.
+        // TODO: Will this work on all supported Minecraft versions? Needs testing!!
         CODEC = new Codec<>() {
             @Override
             public <T> DataResult<T> encode(ServerStatus input, DynamicOps<T> ops, T prefix) {
@@ -40,6 +43,7 @@ public class MixinServerData {
                         jsonObject.addProperty("meldAddress", Config.serverConfig.getReplacedAddress());
                         jsonObject.addProperty("meldIsHttps", Config.serverConfig.useHttps());
                         jsonObject.addProperty("meldSelfSigned", Config.serverConfig.autoSsl() || Config.serverConfig.selfSigned());
+                        LOGGER.debug("Added custom Meld fields to ping packet.");
                     }
                 }
 

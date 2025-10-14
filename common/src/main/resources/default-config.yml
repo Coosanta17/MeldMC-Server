@@ -1,0 +1,53 @@
+## MELDMC CONFIG
+
+# The port Meld will bind to and listen on.
+# This is to send mod information and mods to the client.
+# Make sure to open the port on your firewall and router.
+bind_port: 8080
+
+# The address and port clients will query for Meld mods data.
+# Useful for proxies or custom domains. Set to 0.0.0.0:0 for Minecraft server address and Meld port.
+# You can set this to any web address. omit the protocol to use default value.
+# Examples:
+# server.com:0 -> clients query server.com with Meld bind port.
+# 0.0.0.0:1234 -> clients query current Minecraft server address with a port of 1234.
+# https://server.com:9876/meld/ -> clients query server.com at port 9876 with resource path prefix '/meld/' using
+# HTTPS protocol.
+query_address: 0.0.0.0:0
+
+# Directory where client mod files are stored.
+# The contents of this directory will be sent to the client as the mods to use when joining this server.
+files_directory: ./client-mods
+
+# If the server should use HTTPS for secure connections.
+# This is highly recommended to prevent mod data from being manipulated.
+# only disable if you know what you are doing!
+use_https: true
+
+# If the server will automatically set up SSL for HTTPS connections.
+# Make false for custom certificates.
+auto_ssl: true
+
+## THE FOLLOWING CONFIG ONLY APPLIES IF AUTO_SSL IS DISABLED.
+# This is currently UNTESTED (TODO)
+
+# Path to the SSL keystore file for HTTPS connections.
+keystore_path: config/meldmc/keystore.jks
+
+# Password for the SSL keystore (if any)
+keystore_password: ''
+
+# Type of keystore format
+keystore_type: PKCS12
+
+# Path to the SSL truststore file
+truststore_path: config/meldmc/truststore.jks
+
+# Password for the SSL truststore (if any)
+truststore_password: ''
+
+# Type of truststore format
+truststore_type: PKCS12
+
+# If the SSL certificate is Self-Signed.
+self_signed: true

@@ -20,6 +20,8 @@ public class MeldMC {
     public static void init(String mcVersion, MeldData.ModLoader modLoader, String loaderVersion) {
         LOGGER.info("MeldMC Starting...");
 
+        Config.load();
+
         LOGGER.info("Starting client mod scanning process");
         Map<String, ClientMod> modlistMap = ClientModScanner.scanClientMods(Config.serverConfig.filesDirectory());
         LOGGER.info("Client mod scanning complete");

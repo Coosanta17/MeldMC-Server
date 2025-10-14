@@ -1,19 +1,17 @@
 package net.coosanta.meldmc.mod.config;
 
 import net.coosanta.meldmc.mod.network.ServerConfig;
-import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import static net.coosanta.meldmc.mod.MeldMC.LOGGER;
 
 /**
  * Standalone YAML-backed config loader.
@@ -22,7 +20,7 @@ import java.nio.file.Paths;
  */
 public final class Config {
     // Default location for the YAML file
-    public static final Path CONFIG_PATH = Paths.get("config", "meldmc", "config.yml");
+    public static final Path CONFIG_PATH = Paths.get("config", "meldmc-config.yml");
 
     public static ServerConfig serverConfig;
 
@@ -42,11 +40,7 @@ public final class Config {
                 if (parent != null && Files.notExists(parent)) {
                     Files.createDirectories(parent);
                 }
-                // Write defaults
-                ConfigData defaults = new ConfigData();
-                writeYaml(defaults, CONFIG_PATH);
-                serverConfig = defaults.toServerConfig();
-                return;
+                createDefault(CONFIG_PATH);
             }
 
             try (InputStream in = Files.newInputStream(CONFIG_PATH)) {
@@ -60,14 +54,11 @@ public final class Config {
         }
     }
 
-    private static void writeYaml(ConfigData data, Path path) throws IOException {
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setPrettyFlow(true);
-        options.setIndent(2);
-        Yaml yaml = new Yaml(options);
-        try (Writer w = new OutputStreamWriter(Files.newOutputStream(path), StandardCharsets.UTF_8)) {
-            yaml.dump(data, w);
+    private static void createDefault(Path path) throws IOException {
+        LOGGER.info("Config file not found - creating default");
+        try (InputStream in = Config.class.getClassLoader().getResourceAsStream("default-config.yml")) {
+            if (in == null) throw new IOException("Default config resource not found");
+            Files.copy(in, path);
         }
     }
 }

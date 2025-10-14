@@ -1,5 +1,3 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
 plugins {
     id 'root'
     id 'xyz.wagyourtail.unimined' version '1.4.1-SNAPSHOT' apply false
@@ -9,15 +7,11 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-configurations {
-    shade
-    implementation.extendsFrom shade
+if (JavaVersion.current() != JavaVersion.VERSION_17) {
+    throw new GradleException("JDK 17 is required. Current version: ${JavaVersion.current()}")
 }
 
-subprojects {
-    apply plugin: 'java-library'
-    apply plugin: 'com.github.johnrengelman.shadow'
-
+allprojects {
     configurations {
         shade
         implementation.extendsFrom shade
@@ -34,11 +28,17 @@ subprojects {
         shade 'com.fasterxml.jackson.core:jackson-core:2.20.0'
     }
 
-    shadowJar {
-        archiveClassifier = 'shadow'
-        configurations = [project.configurations.shade]
-        mergeServiceFiles()
+    java {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
+    tasks.withType(JavaCompile).configureEach {
+        options.release = 17
+    }
+}
+
+subprojects {
+    apply plugin: 'java-library'
 }
 
 def buildsForRaw = (gradle.hasProperty('builds_for') ? (String) gradle.builds_for : '')
@@ -47,6 +47,7 @@ def hasNeoForge = buildsFor.contains('neoforge')
 
 forgix {
     destinationDirectory = layout.projectDirectory.dir("build/forgix")
+    archiveClassifier = "all-platforms"
 
     fabric()
     forge()
@@ -55,4 +56,14 @@ forgix {
     }
 
     autoRun = true
+}
+
+shadowJar {
+    relocate 'org.yaml', 'net.coosanta.meldmc.relocated.org.yaml'
+    relocate 'org.bouncycastle', 'net.coosanta.meldmc.relocated.org.bouncycastle'
+    relocate 'com.fasterxml.jackson', 'net.coosanta.meldmc.relocated.com.fasterxml.jackson'
+
+    from(layout.buildDirectory.file("forgix/meldmc-${mod_version}-${mc_ver}-all-platforms.jar"))
+    configurations = [project.configurations.shade]
+    archiveClassifier.set('all-platforms-shaded')
 }
