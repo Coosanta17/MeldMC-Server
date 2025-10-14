@@ -6,8 +6,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  prepare-matrix:
     runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.set-matrix.outputs.versions }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generate version matrix
+        id: set-matrix
+        run: |
+          versions=$(ls versionProperties/*.properties | xargs -n 1 basename | sed 's/.properties//' | jq -R -s -c 'split("\n")[:-1]')
+          echo "versions=$versions" >> $GITHUB_OUTPUT
+
+  build:
+    needs: prepare-matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: ${{ fromJson(needs.prepare-matrix.outputs.versions) }}
+      fail-fast: false
     steps:
       - uses: actions/checkout@v4
 
@@ -25,5 +43,11 @@ jobs:
       - name: Make Gradle Wrapper and Build Script executable
         run: chmod +x gradlew; chmod +x buildall.sh
 
-      - name: Build with script
-        run: ./buildall.sh
+      - name: Build version ${{ matrix.version }}
+        run: ./buildall.sh --version ${{ matrix.version }}
+
+      - name: Upload artifact for ${{ matrix.version }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: meldmc-${{ matrix.version }}
+          path: allJars/*.jar
