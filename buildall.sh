@@ -54,7 +54,7 @@ if [[ -n "$VERSION_ARG" ]]; then
   mv gradle.properties.backup gradle.properties
 
   echo "Move to ./allJars"
-  mv build/lib/*-shaded.jar allJars/
+  mv build/libs/*-shaded.jar allJars/
 else
   # Collect all versions
   versions=()
@@ -80,6 +80,6 @@ else
     build_version_jar "$version"
 
     echo "Move to ./allJars"
-    mv build/lib/*-shaded.jar allJars/
+    mv build/libs/*-shaded.jar allJars/
   done
 fi
