@@ -19,8 +19,8 @@ if (gradle.hasProperty('mcVer')) {
         int vInt = major * 10000 + minor * 100 + patch
         int minInt = 1 * 10000 + 20 * 100 + 5
         allowJava21 = vInt >= minInt
-    } catch (Exception ignored) {
-        allowJava21 = false
+    } catch (Exception definatelyNotIgnoredAndShouldMostDefinatelyBeThrown) {
+        throw new GradleException("Comparing versions fucking failed!!!!!!", definatelyNotIgnoredAndShouldMostDefinatelyBeThrown)
     }
 }
 
