@@ -7,27 +7,6 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
-def currentJava = JavaVersion.current()
-def allowJava21 = false
-if (gradle.hasProperty('mcVer')) {
-    try {
-        def mc = gradle.mcVer.toString()
-        def parts = mc.tokenize('\\.')
-        int major = parts.size() > 0 ? parts[0].toInteger() : 0
-        int minor = parts.size() > 1 ? parts[1].toInteger() : 0
-        int patch = parts.size() > 2 ? parts[2].toInteger() : 0
-        int vInt = major * 10000 + minor * 100 + patch
-        int minInt = 1 * 10000 + 20 * 100 + 5
-        allowJava21 = vInt >= minInt
-    } catch (Exception definatelyNotIgnoredAndShouldMostDefinatelyBeThrown) {
-        throw new GradleException("Comparing versions fucking failed!!!!!!", definatelyNotIgnoredAndShouldMostDefinatelyBeThrown)
-    }
-}
-
-if (!(currentJava == JavaVersion.VERSION_17 || (currentJava == JavaVersion.VERSION_21 && allowJava21))) {
-    throw new GradleException("JDK 17 is required. Current version: ${currentJava}")
-}
-
 allprojects {
     configurations {
         shade

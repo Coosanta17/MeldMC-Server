@@ -29,24 +29,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Determine Java version for ${{ matrix.version }}
-        id: java-ver
-        run: |
-          # Compare version string
-          v="${{ matrix.version }}"
-          # Remove dots and pad to 4 digits for proper comparison, e.g. 1.20.5 -> 01205
-          vnum=$(echo "$v" | awk -F. '{printf "%d%02d%02d", $1, $2, $3}')
-          cmp=$(echo "$vnum >= 12005" | bc)
-          if [ "$cmp" -eq 1 ]; then
-            echo "java_version=21" >> $GITHUB_OUTPUT
-          else
-            echo "java_version=17" >> $GITHUB_OUTPUT
-          fi
-
       - name: Set up JDK ${{ steps.java-ver.outputs.java_version }}
         uses: actions/setup-java@v4
         with:
-          java-version: ${{ steps.java-ver.outputs.java_version }}
+          java-version: 21
           distribution: 'temurin'
 
       - name: Setup Gradle
